@@ -7,6 +7,12 @@
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
+My initial UML design includes 
+- Owner (name, available_time_minutes)
+- Pet (name, age, weight, type of pet)
+- Task (title, duration_minutes, priority, category)
+- Schedule (list of tasks) - add_task(task), total_duration(), summary()
+
 **b. Design changes**
 
 - Did your design change during implementation?
