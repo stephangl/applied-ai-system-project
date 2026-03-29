@@ -18,6 +18,8 @@ My initial UML design includes
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
+Yes, Claude identified some missing relationship. Owenr and Schedule were not connected. Pet had no influence on task or schedule. Pet data was stored but never used. Priority was used as a string and instead changed to enum. Low = 1, Medium = 2, High = 3. Also introduced a budget, this way we know if can keep track of costs and the owner can decide the schedule appropriately
+
 ---
 
 ## 2. Scheduling Logic and Tradeoffs
