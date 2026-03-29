@@ -34,6 +34,34 @@ The scheduler selects and orders tasks greedily by priority, fitting them within
 - **Sorting and filtering** — the schedule can be sorted chronologically by `preferred_time` and filtered by status (`pending`/`completed`) or by pet name.
 - **Conflict detection** — after scheduling, overlapping time slots are detected using interval overlap logic and returned as human-readable warnings, without crashing the program.
 
+## Testing PawPal+
+
+### Run the tests
+
+```bash
+python -m pytest tests/test_pawpal.py -v
+```
+
+### What the tests cover
+
+| Area | What is verified |
+|---|---|
+| **Task completion** | Calling `complete()` changes status from `pending` to `completed` |
+| **Pet task tracking** | Adding tasks to a pet correctly increases the pet's task count |
+| **Sorting** | `sort_by_time()` returns tasks in strict chronological order (HH:MM), including 5-task scrambled input |
+| **Filtering** | `filter_by_status()` and `filter_by_pet()` return only matching tasks |
+| **Recurring tasks** | Daily/weekly tasks produce a new instance with the correct `due_date` on completion; all attributes are preserved |
+| **Non-recurring tasks** | `complete()` returns `None` for `repeat="none"` tasks |
+| **Owner re-queuing** | `Owner.complete_task()` appends the next occurrence back into the task pool |
+| **Conflict detection** | Overlapping time slots and exact duplicate times are flagged with a warning message |
+| **No false conflicts** | Sequential tasks that touch but do not overlap produce no warnings |
+
+### Confidence level
+
+★★★★☆ (4/5)
+
+Core scheduling logic, recurrence, sorting, filtering, and conflict detection are all covered with both happy-path and edge-case tests (14 passing). One star held back because the greedy scheduler has no tests for budget-only or time-only exclusion scenarios, and the Streamlit UI layer has no automated tests.
+
 ## Getting started
 
 ### Setup
