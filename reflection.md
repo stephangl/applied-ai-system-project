@@ -28,11 +28,15 @@ Yes, Claude identified some missing relationship. Owenr and Schedule were not co
 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
+It checks for conflicts, and preferred time, also computes the dutation. The constraints that mattered most I decided where priority and conflicts.
+
 
 **b. Tradeoffs**
 
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
+
+Tasks are picked on by one from a sorted list and added if they fit, but it can leave time on the table. This is reasonable since a pet owner just needs something fast and transparent instead of optimizing every single specific time block.
 
 ---
 
@@ -43,10 +47,14 @@ Yes, Claude identified some missing relationship. Owenr and Schedule were not co
 - How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
 - What kinds of prompts or questions were most helpful?
 
+I used it for refactoring, helping me craft my finalized UML diagram and brainstorming.
+
 **b. Judgment and verification**
 
 - Describe one moment where you did not accept an AI suggestion as-is.
 - How did you evaluate or verify what the AI suggested?
+
+There was no logic to consider if an owner had more than one pet in the UML diagram it constructed. So I had to manually mention that edge case.
 
 ---
 
@@ -77,3 +85,5 @@ Yes, Claude identified some missing relationship. Owenr and Schedule were not co
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+I think constantly double checking its work and asking it to pause and consider the changes its makign and what effects it may have. It tends to just follow whatever the user prompts.

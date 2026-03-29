@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import date, timedelta
 from enum import Enum
 from typing import List, Optional
 
@@ -29,12 +30,31 @@ class Task:
     priority: Priority
     category: str           # "walk", "feeding", "meds", "enrichment", "grooming"
     cost: float = 0.0
-    pet: Optional[Pet] = None   # which pet this task is for
-    status: str = "pending"     # "pending" or "completed"
+    pet: Optional[Pet] = None       # which pet this task is for
+    status: str = "pending"         # "pending" or "completed"
+    preferred_time: str = "08:00"   # HH:MM format
+    repeat: str = "none"            # "none", "daily", "weekly"
+    due_date: date = field(default_factory=date.today)
 
-    def complete(self) -> None:
-        """Mark this task as completed."""
+    def complete(self) -> Optional["Task"]:
+        """Mark this task as completed and return the next occurrence if recurring."""
         self.status = "completed"
+
+        intervals = {"daily": timedelta(days=1), "weekly": timedelta(weeks=1)}
+        if self.repeat not in intervals:
+            return None
+
+        return Task(
+            title=self.title,
+            duration_minutes=self.duration_minutes,
+            priority=self.priority,
+            category=self.category,
+            cost=self.cost,
+            pet=self.pet,
+            preferred_time=self.preferred_time,
+            repeat=self.repeat,
+            due_date=date.today() + intervals[self.repeat],
+        )
 
 
 @dataclass
@@ -53,6 +73,12 @@ class Owner:
         """Add a care task to the owner's task pool."""
         self.tasks.append(task)
 
+    def complete_task(self, task: Task) -> None:
+        """Mark a task complete and re-queue the next occurrence if recurring."""
+        next_task = task.complete()
+        if next_task:
+            self.tasks.append(next_task)
+
 
 class Schedule:
     def __init__(self):
@@ -69,6 +95,42 @@ class Schedule:
     def total_cost(self) -> float:
         """Return the total cost of all scheduled tasks."""
         return sum(task.cost for task in self.tasks)
+
+    def sort_by_time(self) -> List[Task]:
+        """Return tasks sorted by preferred_time (HH:MM) using a lambda key."""
+        return sorted(self.tasks, key=lambda t: tuple(map(int, t.preferred_time.split(":"))))
+
+    def filter_by_status(self, status: str) -> List[Task]:
+        """Return only tasks matching the given status ('pending' or 'completed')."""
+        return [t for t in self.tasks if t.status == status]
+
+    def filter_by_pet(self, pet_name: str) -> List[Task]:
+        """Return only tasks assigned to the given pet name."""
+        return [t for t in self.tasks if t.pet and t.pet.name == pet_name]
+
+    def detect_conflicts(self) -> List[str]:
+        """Return a list of warning messages for tasks whose time slots overlap."""
+        warnings = []
+
+        def to_minutes(hhmm: str) -> int:
+            h, m = map(int, hhmm.split(":"))
+            return h * 60 + m
+
+        tasks = self.sort_by_time()
+        for i, a in enumerate(tasks):
+            a_start = to_minutes(a.preferred_time)
+            a_end   = a_start + a.duration_minutes
+            for b in tasks[i + 1:]:
+                b_start = to_minutes(b.preferred_time)
+                b_end   = b_start + b.duration_minutes
+                if a_start < b_end and b_start < a_end:
+                    a_pet = a.pet.name if a.pet else "unassigned"
+                    b_pet = b.pet.name if b.pet else "unassigned"
+                    warnings.append(
+                        f"WARNING: '{a.title}' ({a_pet}, {a.preferred_time}–{a_end % 60:02d} min) "
+                        f"overlaps with '{b.title}' ({b_pet}, {b.preferred_time})"
+                    )
+        return warnings
 
     def summary(self) -> str:
         """Return a human-readable overview of the scheduled plan."""
@@ -90,7 +152,10 @@ class Schedule:
 class Scheduler:
     def schedule(self, owner: Owner) -> Schedule:
         """Build a daily plan by fitting the highest-priority tasks within time and budget."""
-        sorted_tasks = sorted(owner.tasks, key=lambda t: t.priority.value, reverse=True)
+        sorted_tasks = sorted(
+            owner.tasks,
+            key=lambda t: (-t.priority.value, tuple(map(int, t.preferred_time.split(":")))),
+        )
 
         plan = Schedule()
         spent_budget = 0.0

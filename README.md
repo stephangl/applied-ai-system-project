@@ -23,6 +23,17 @@ Your final app should:
 - Include tests for the most important scheduling behaviors
 
 
+## Smart Scheduler
+
+The scheduler selects and orders tasks greedily by priority, fitting them within the owner's time and budget constraints. Key features built on top of the core logic:
+
+- **Priority-based scheduling** — tasks are sorted high → low priority, with `preferred_time` (HH:MM) as a tiebreaker so earlier tasks fill slots first.
+- **Multi-pet support** — an owner can register multiple pets; each task is linked to a specific pet and labelled in the schedule output.
+- **Budget enforcement** — tasks with a cost are only included if the remaining budget allows it; a $0 budget disables the check.
+- **Recurring tasks** — tasks marked `repeat="daily"` or `repeat="weekly"` automatically generate the next occurrence (via `timedelta`) when completed, keeping the task pool up to date.
+- **Sorting and filtering** — the schedule can be sorted chronologically by `preferred_time` and filtered by status (`pending`/`completed`) or by pet name.
+- **Conflict detection** — after scheduling, overlapping time slots are detected using interval overlap logic and returned as human-readable warnings, without crashing the program.
+
 ## Getting started
 
 ### Setup
