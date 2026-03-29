@@ -92,4 +92,5 @@ pip install -r requirements.txt
 7. Refine UML so it matches what you actually built.
 
 📸 Demo
-<a href="/course_images/ai110/your_screenshot_name.png" target="_blank"><img src='/course_images/ai110
+
+<a href="/ai110/ai110-module2show-pawpal-starter/demo.png" target="_blank"><img src='/course_images/ai110/ai110-module2show-pawpal-starter/demo.png' width='600'/></a>
