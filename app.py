@@ -12,7 +12,7 @@ if "tasks" not in st.session_state:
 
 # ---------------------------------------------------------------------------
 
-st.title("🐾 PawPal+")
+st.title("PawPal+")
 
 # --- Owner & Pet setup ---
 st.subheader("Owner & Pets")
@@ -37,7 +37,6 @@ with pcol4:
     pet_type = st.selectbox("Species", ["dog", "cat", "other"])
 
 if st.button("Save owner & add pet"):
-    # Create owner only if it doesn't exist yet, otherwise keep existing pets/tasks
     if st.session_state.owner is None:
         st.session_state.owner = Owner(
             name=owner_name,
@@ -45,13 +44,12 @@ if st.button("Save owner & add pet"):
             budget=budget,
         )
     else:
-        # Update time/budget without resetting pets or tasks
         st.session_state.owner.available_time_minutes = int(available_minutes)
         st.session_state.owner.budget = budget
 
     new_pet = Pet(name=pet_name, age=int(pet_age), weight=float(pet_weight), type=pet_type)
     st.session_state.owner.add_pet(new_pet)
-    st.success(f"Saved! {pet_name} added to {owner_name}'s pets.")
+    st.success(f"{pet_name} added to {owner_name}'s pets.")
 
 if st.session_state.owner:
     pet_names = [p.name for p in st.session_state.owner.pets]
@@ -62,7 +60,7 @@ st.divider()
 # --- Task management ---
 st.subheader("Tasks")
 
-tcol1, tcol2, tcol3, tcol4 = st.columns(4)
+tcol1, tcol2, tcol3, tcol4, tcol5 = st.columns(5)
 with tcol1:
     task_title = st.text_input("Task title", value="Morning walk")
 with tcol2:
@@ -71,10 +69,11 @@ with tcol3:
     priority = st.selectbox("Priority", ["HIGH", "MEDIUM", "LOW"])
 with tcol4:
     cost = st.number_input("Cost ($)", min_value=0.0, value=0.0, step=5.0)
+with tcol5:
+    preferred_time = st.text_input("Time (HH:MM)", value="08:00")
 
 category = st.selectbox("Category", ["walk", "feeding", "meds", "enrichment", "grooming"])
 
-# Pet selector — only shown if an owner with pets exists
 task_pet = None
 if st.session_state.owner and st.session_state.owner.pets:
     pet_options = {p.name: p for p in st.session_state.owner.pets}
@@ -92,15 +91,17 @@ if st.button("Add task"):
             category=category,
             cost=float(cost),
             pet=task_pet,
+            preferred_time=preferred_time,
         )
         st.session_state.owner.add_task(task)
         st.session_state.tasks.append({
-            "title": task_title,
-            "pet": task_pet.name if task_pet else "-",
-            "duration": int(duration),
-            "priority": priority,
-            "cost": f"${cost:.2f}",
-            "category": category,
+            "Title":    task_title,
+            "Pet":      task_pet.name if task_pet else "-",
+            "Time":     preferred_time,
+            "Duration": f"{int(duration)} min",
+            "Priority": priority,
+            "Cost":     f"${cost:.2f}",
+            "Category": category,
         })
         st.success(f"Task '{task_title}' added.")
 
@@ -120,14 +121,59 @@ if st.button("Generate schedule"):
     elif not st.session_state.owner.tasks:
         st.warning("Add at least one task before generating a schedule.")
     else:
-        plan = Scheduler().schedule(st.session_state.owner)
-        st.success("Schedule generated!")
-        st.text(plan.summary())
+        owner = st.session_state.owner
+        plan  = Scheduler().schedule(owner)
 
-        conflicts = plan.detect_conflicts()
-        if conflicts:
-            st.warning("Scheduling conflicts detected:")
-            for msg in conflicts:
-                st.warning(msg)
+        if not plan.tasks:
+            st.error("No tasks fit within your time or budget. Try increasing your available time or budget.")
         else:
-            st.info("No scheduling conflicts.")
+            st.success(
+                f"Schedule ready — {len(plan.tasks)} task(s) planned, "
+                f"{plan.total_duration()} min total, ${plan.total_cost():.2f} estimated cost."
+            )
+
+            # --- Sorted schedule table ---
+            sorted_tasks = plan.sort_by_time()
+            st.markdown("#### Daily Plan (sorted by time)")
+            st.table([
+                {
+                    "Time":     t.preferred_time,
+                    "Task":     t.title,
+                    "Pet":      t.pet.name if t.pet else "-",
+                    "Duration": f"{t.duration_minutes} min",
+                    "Priority": t.priority.name.capitalize(),
+                    "Cost":     f"${t.cost:.2f}" if t.cost > 0 else "-",
+                }
+                for t in sorted_tasks
+            ])
+
+            # --- Skipped tasks ---
+            scheduled_titles = {t.title for t in plan.tasks}
+            skipped = [t for t in owner.tasks if t.title not in scheduled_titles]
+            if skipped:
+                st.markdown("#### Skipped Tasks")
+                st.caption("These tasks did not fit within your time or budget constraints.")
+                st.table([
+                    {
+                        "Task":     t.title,
+                        "Pet":      t.pet.name if t.pet else "-",
+                        "Duration": f"{t.duration_minutes} min",
+                        "Cost":     f"${t.cost:.2f}" if t.cost > 0 else "-",
+                        "Priority": t.priority.name.capitalize(),
+                    }
+                    for t in skipped
+                ])
+
+            # --- Conflict warnings ---
+            st.markdown("#### Conflict Check")
+            conflicts = plan.detect_conflicts()
+            if conflicts:
+                st.warning(
+                    f"{len(conflicts)} scheduling conflict(s) found. "
+                    "Two tasks are overlapping — adjust the start time of one to fix this."
+                )
+                for msg in conflicts:
+                    # Parse out the two task names for a friendlier display
+                    st.warning(msg)
+            else:
+                st.success("No time conflicts — your schedule is clear.")

@@ -23,16 +23,25 @@ Your final app should:
 - Include tests for the most important scheduling behaviors
 
 
-## Smart Scheduler
+## Features
 
-The scheduler selects and orders tasks greedily by priority, fitting them within the owner's time and budget constraints. Key features built on top of the core logic:
+### Greedy Priority Scheduler
+Tasks are sorted by priority (HIGH → MEDIUM → LOW) and added to the schedule one by one as long as they fit within the owner's available time and budget. Within the same priority level, tasks with an earlier `preferred_time` are selected first. This approach is fast and predictable — the owner always knows why a task was included or skipped.
 
-- **Priority-based scheduling** — tasks are sorted high → low priority, with `preferred_time` (HH:MM) as a tiebreaker so earlier tasks fill slots first.
-- **Multi-pet support** — an owner can register multiple pets; each task is linked to a specific pet and labelled in the schedule output.
-- **Budget enforcement** — tasks with a cost are only included if the remaining budget allows it; a $0 budget disables the check.
-- **Recurring tasks** — tasks marked `repeat="daily"` or `repeat="weekly"` automatically generate the next occurrence (via `timedelta`) when completed, keeping the task pool up to date.
-- **Sorting and filtering** — the schedule can be sorted chronologically by `preferred_time` and filtered by status (`pending`/`completed`) or by pet name.
-- **Conflict detection** — after scheduling, overlapping time slots are detected using interval overlap logic and returned as human-readable warnings, without crashing the program.
+### Chronological Sorting
+`Schedule.sort_by_time()` sorts scheduled tasks by their `preferred_time` field (HH:MM format) using a lambda that converts the time string into a `(hours, minutes)` integer tuple. This ensures `"09:30"` correctly sorts before `"13:00"`, avoiding the wrong order that plain alphabetical string comparison would produce. The Streamlit UI always displays the final plan in this sorted order.
+
+### Conflict Detection
+After a schedule is built, `Schedule.detect_conflicts()` checks every pair of tasks for time-slot overlap using the interval overlap condition: two tasks conflict if `a_start < b_end AND b_start < a_end`. Start and end times are derived from `preferred_time` and `duration_minutes`. Conflicts are returned as human-readable warning strings rather than exceptions, so the app stays running and the owner can adjust task times manually.
+
+### Daily Recurrence
+Tasks with `repeat="daily"` or `repeat="weekly"` automatically regenerate when completed. Calling `task.complete()` marks the original as `"completed"` and returns a new `Task` instance with the same attributes and a `due_date` of `date.today() + timedelta(days=1)` (or `timedelta(weeks=1)`). `Owner.complete_task()` handles re-queuing this new instance back into the owner's task pool. Non-recurring tasks return `None` from `complete()` and are not re-queued.
+
+### Filtering
+`Schedule.filter_by_status(status)` and `Schedule.filter_by_pet(pet_name)` return filtered subsets of the scheduled tasks using list comprehensions. These are used in the UI to separate pending from completed tasks and to show per-pet views of the plan.
+
+### Multi-pet Support
+An owner can register any number of pets via `Owner.add_pet()`. Each task carries an optional reference to the pet it belongs to, which is used for filtering, conflict labelling, and display in the schedule table.
 
 ## Testing PawPal+
 
@@ -81,3 +90,6 @@ pip install -r requirements.txt
 5. Add tests to verify key behaviors.
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
+
+📸 Demo
+<a href="/course_images/ai110/your_screenshot_name.png" target="_blank"><img src='/course_images/ai110

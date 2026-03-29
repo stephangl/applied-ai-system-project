@@ -54,7 +54,7 @@ I used it for refactoring, helping me craft my finalized UML diagram and brainst
 - Describe one moment where you did not accept an AI suggestion as-is.
 - How did you evaluate or verify what the AI suggested?
 
-There was no logic to consider if an owner had more than one pet in the UML diagram it constructed. So I had to manually mention that edge case.
+There was no logic to consider if an owner had more than one pet in the UML diagram it constructed. So I had to manually mention that edge case. Once implemented it redesigned the diagram to implement the new change.
 
 ---
 
@@ -63,13 +63,16 @@ There was no logic to consider if an owner had more than one pet in the UML diag
 **a. What you tested**
 
 - What behaviors did you test?
+Task completetion,sorting, filtering
 - Why were these tests important?
+These are vital to the app - ex. Task completion is a core logic to change tasks status. Sorting returns tasks
+in strict chronologigal order, and filtering to return only mathing tasks
 
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
 - What edge cases would you test next if you had more time?
-
+I would say pretty confident as the core logic covers both happy paths and edge cases. If I had more time I would test to see if two tasks of equal priortiy and identical preferred times then which one would take precedence? Also checking if the owner has days where they are strictly unavailable.
 ---
 
 ## 5. Reflection
@@ -77,10 +80,13 @@ There was no logic to consider if an owner had more than one pet in the UML diag
 **a. What went well**
 
 - What part of this project are you most satisfied with?
+I was satisfied with the final UML diagram after some reiterations with AI.
 
 **b. What you would improve**
+I would improve on the UI, it seems a little overwhelming and not very user friendly.
 
 - If you had another iteration, what would you improve or redesign?
+I would improve on some edge cases, the ones implemented are sufficient but does not cover everything.
 
 **c. Key takeaway**
 
