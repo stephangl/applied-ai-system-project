@@ -233,3 +233,9 @@ applied-ai-system-project/
 <a href="./assets/testcase.png" target="_blank"><img src="./assets/testcase.png" width="600"/></a>
 
 <a href="./assets/testcase2.png" target="_blank"><img src="./assets/testcase2.png" width="600"/></a>
+
+---
+
+## Video Walkthrough
+
+[Watch the full walkthrough on Loom](https://www.loom.com/share/780b48cae5fb4579a466cb7a3c690676)
